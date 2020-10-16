@@ -1,0 +1,56 @@
+ISA-SNMP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	OBJECT-TYPE, Integer32, TimeTicks
+	MODULE-IDENTITY, experimental         FROM SNMPv2-SMI
+	DisplayString 			      FROM SNMPv2-TC
+	MODULE-COMPLIANCE, OBJECT-GROUP       FROM SNMPv2-CONF;
+
+IsaSNMPMIB MODULE-IDENTITY
+    LAST-UPDATED "202010170000Z"            -- 17 October 2020, midnight
+    ORGANIZATION "VUT-FIT"
+    CONTACT-INFO "name:     Marek Ziska
+                  login:    xziska03
+
+		  email:    xziska03@stud.fit.vutbr.cz
+                 "
+    DESCRIPTION  "MIB for school project at FIT VUT.
+                 "
+    ::= { experimental 22 }
+
+IsaLOGIN OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"This is an object that contains login of the author of this 		project."
+    DEFVAL { xziska03 }
+    ::= { IsaSNMPMIB 1 }
+
+IsaTIME OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"This is an object that contains current time."
+    ::= { IsaSNMPMIB 2 }
+
+IsaINT OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+	"This is an object that contains modifiable integer."
+    DEFVAL { 4 }
+    ::= { IsaSNMPMIB 3 }
+
+IsaOSINFO OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"This is an object that contains some information about operating system."
+    ::= { IsaSNMPMIB 4 }
+
+
+END
