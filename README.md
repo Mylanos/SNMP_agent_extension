@@ -39,7 +39,7 @@ snmpset localhost UCD-DLMOD-MIB::dlmodStatus.1 i create
 
 snmptable localhost UCD-DLMOD-MIB::dlmodTable 
 
-snmpset localhost UCD-DLMOD-MIB::dlmodName.1 s IsaSNMPMIB UCD-DLMOD-MIB::dlmodPath.1 s [<path-to-.so-file>]/IsaSNMPMIB.so
+snmpset localhost UCD-DLMOD-MIB::dlmodName.1 s IsaSNMPMIB UCD-DLMOD-MIB::dlmodPath.1 s /path/to/IsaSNMPMIB.so
 
 snmptable localhost UCD-DLMOD-MIB::dlmodTable 
 
