@@ -35,14 +35,17 @@ sudo snmpd -f -L -DIsaSNMPMIB,dlmod
 
 ## Nastavenie dlmod tabulky
 ```
+//Create a new row in the dlmod table
 snmpset localhost UCD-DLMOD-MIB::dlmodStatus.1 i create
 
+// See that the row was created
 snmptable localhost UCD-DLMOD-MIB::dlmodTable 
 
+//set the properties of the row up to point to our new object and to give it a name
 snmpset localhost UCD-DLMOD-MIB::dlmodName.1 s IsaSNMPMIB UCD-DLMOD-MIB::dlmodPath.1 s /path/to/IsaSNMPMIB.so
+ptable localhost UCD-DLMOD-MIB::dlmodTable 
 
-snmptable localhost UCD-DLMOD-MIB::dlmodTable 
-
+//load the shared object into the running agent
 snmpset localhost UCD-DLMOD-MIB::dlmodStatus.1 i load 
 
 snmptable localhost UCD-DLMOD-MIB::dlmodTable 
@@ -51,6 +54,7 @@ snmptable localhost UCD-DLMOD-MIB::dlmodTable
 
 ## Priklad požiadaviek na vytvorené objekty
 -------------------------
+Spustenie nasledujúcich požiadaviek predpokladá, že v druhom terminály beží snmp agent a prebehlo nastavenie dlmod tabulky, tak ako je popísané v predchádzajúcej časti.
 ```
 snmpget localhost ISA-SNMP-MIB::IsaLOGIN.0
 
