@@ -1,0 +1,203 @@
+\documentclass{article}
+\usepackage{array}
+\newcolumntype{L}{>{\centering\arraybackslash}m{4cm}}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[unicode]{hyperref}
+\usepackage{graphicx}
+\usepackage[section]{placeins}
+\usepackage{textcomp}
+\usepackage[T1]{fontenc}
+\usepackage[left=2cm, text={17cm, 24cm}, top=2cm]{geometry}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{caption}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{verbatimbox}
+\usepackage{listings}
+\usepackage[none]{hyphenat}
+\hypersetup{
+    colorlinks=true, % make the links colored
+    linkcolor=blue, % color TOC links in blue
+    urlcolor=red, % color URLs in red
+    linktoc=all % 'all' will create links for everything in the TOC
+}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%TITULKA%%%%%%%%%%%%%%%%%% 
+
+	\begin{titlepage}
+		\begin{center}
+			\textsc{\Huge Vysoké Učení Technické v Brně} \\[0.7cm]
+			{\Huge Fakulta informačních technologií}
+			\center\includegraphics[width=0.7\linewidth]{./logo.png}
+
+			\vspace{5cm}
+
+			\textbf{{\Huge Dokumentácia k projektu ISA}}\\[0.4cm]
+			\textbf{{\LARGE Rozšírenie SNMP agenta}}\\[0.4cm]
+			
+		\end{center}
+		\vfill
+
+		\begin{flushleft}
+			\begin{Large}
+				\textbf{Marek Žiška}\hspace{10px}\textbf{(xziska03)}
+			\hfill
+			Brno, 18.11.2020
+			\end{Large}
+		\end{flushleft}
+
+	\end{titlepage}
+%%%%%%%%%%%%%%%%%TITULKA%%%%%%%%%%%%%%%%%% 
+
+%%%%%%%%%%%%%%%%%OBSAH%%%%%%%%%%%%%%%%%% 
+
+	\tableofcontents
+	\newpage
+%%%%%%%%%%%%%%%%%OBSAH%%%%%%%%%%%%%%%%%% 
+
+
+	\section{Úvod}
+	\large{Tento dokument popisuje implementáciu vlastného MIB modulu a dynamicky načítateľného rozšírenia SNMP agenta net-snmp.}
+	\vspace{1cm}
+	\section{Teória}
+	\subsection{SNMP}
+	SNMP je skratka pre Simple Network Monitoring Protocol. Je to protokol na prenos informácií o správe v sieťach, najmä na použitie v sieťach LAN, v závislosti od zvolenej verzie.
+	
+	Jeho užitočnosť pri správe siete spočíva v tom, že umožňuje zhromažďovať informácie o zariadeniach pripojených k sieti štandardizovaným spôsobom v širokej škále typov hardvéru a softvéru.
+
+    Málokto zo správcov sietí sa vzdá protokolu SNMP, pretože takmer všetky druhy zariadení od mnohých rôznych výrobcov podporujú protokol SNMP, čo im pomáha dosiahnuť komplexné monitorovanie vďaka technológii SNMP.
+    
+    Sieť má zvyčajne najmenej jeden počítač alebo server, na ktorom je spustený monitorovací softvér a predstavuje riadiaci subjekt. Sieť tiež pravdepodobne bude mať niekoľko zariadení, od prepínačov až po tlačiarne alebo čokoľvek iné, čo je potrebné monitorovať. Sú to spravované zariadenia.
+
+    Správy SNMP sa odosielajú a prijímajú medzi takzvanými manažérmi a agentmi. V zásade možno prenos správ SNMP porovnať s typickou komunikáciou medzi klientom a serverom, ktorá ponúka technológie pull( GET request) aj push(Pushed out, trap).
+    \vspace{1cm}
+    \subsection{MIB a OID}
+    OID znamená Object Identifier, teda OID jedinečne identifikujú spravované objekty, ktoré sú definované v súboroch MIB. 
+
+    Hierarchia objektov (OID) sa všeobecne zobrazuje ako strom s rôznymi úrovňami od koreňa až po jednotlivé listy.
+    \\
+    \begin{verbbox}
+Iso(1).org(3).dod(6).internet(1).private(3).experimental(868).
+        atsign-proxy(22).<implementovany objekt>(1-4)
+    \end{verbbox}
+    \begin{figure}[ht]
+        \centering
+        \theverbbox
+        \caption{Hierarchia OID objektov v projekte}
+    \end{figure}
+    \vspace{1cm}
+    \\
+    MIB znamená Management Information Base a označuje nezávislý formát pre definíciu manažérskych informácií. Inými slovami, MIB obsahujú OID presne definovaným spôsobom. V MIB získa každý objekt svoju definíciu, ktorá určuje jeho vlastnosti v rámci spravovaného zariadenia. K objektom sa pristupuje pomocou protokolu SNMP.
+    \\
+    
+    \begin{verbbox}
+IsaOSINFO OBJECT-TYPE
+SYNTAX      DisplayString
+MAX-ACCESS  read-only
+STATUS      current
+DESCRIPTION
+"Object contains information about operating system."
+::= { IsaSNMPMIB 4 }
+    \end{verbbox}
+    \begin{figure}[!htb]
+        \centering
+        \theverbbox
+        \caption{Hierarchia OID objektov v projekte}
+        \label{MIBobjekt}
+    \end{figure}
+    
+    \vspace{1cm}
+	\section{Implementácia}
+	\subsection{MIB súbor}
+	Pri návrhu MIB súboru som sa držal tutoriálov na dokumentačných stránkach \href{http://www.net-snmp.org/wiki/index.php/Tutorials}{SNMP} a inšpiroval som sa už existujúcimi MIB súbormi, ktoré sa nachádzaju v \textit{usr/share/snmp/mibs} 
+	\\
+	Ako prvé v MIB súbore som deklaroval importy iných MIB súborov, ktoré obsahujú definície objektov využívané v mojom implementovanom MIB. Je to napríklad \textit{DisplayString}, používaný na objekt obsahujúci login alebo \textit{experimental}, pod ktorý sa vlastne bude náš MIB modul implementovať. Následne som definoval vlastný MIB \textit{MODULE-ENTITY}, v ktorom sa bližšie popisuje tento MIB súbor. Ako posledné som definoval jednotlivé skalárne objekty zo zadania, tak ako bolo ukázané na obrázku [\ref{MIBobjekt}]. Vytvorené výsledné objekty som si zobrazil pomocou príkazu \textit{snmpwalk}.
+	\begin{figure}[!htb]
+	    \begin{lstlisting}[language=bash]
+[user@localhost ISA]$ snmpwalk -v 1 -c public localhost .1.3.6.1.3.22
+SNMPv2-SMI::experimental.22.1.0 = STRING: "xziska03"
+SNMPv2-SMI::experimental.22.2.0 = STRING: "2020-11-12T07:14:52+05:00"
+SNMPv2-SMI::experimental.22.3.0 = INTEGER: 69
+SNMPv2-SMI::experimental.22.4.0 = STRING: "Operating system is Linux!"
+        \end{lstlisting}
+        \label{MIBcontent}
+        \caption{MIB objekty}
+    \end{figure}
+   \vspace{1cm}
+    \subsection{Agent}
+    Pri implementácií agenta som využil nástroj \textit{mib2c}, ktorá dokáže vygenerovať kostru agenta v jazyku C. Predtým ako bolo ale možné použiť tento nástroj, bolo nutné vytvorený MIB súbor \href{http://www.net-snmp.org/wiki/index.php/TUT:Using_and_loading_MIBS}{načítať}. To tak, že náš MIB je treba vložiť do už spomenutej cesty \textit{usr/share/snmp/mibs} obsahujúcej ostatné MIB súbory. Teraz už bolo možné generovať kostru agenta. Pre mib2c bolo potrebné špecifikovať argument \textit{-c CONFIGFILE}, keďže v \href{http://www.net-snmp.org/docs/man/mib2c.html}{dokumentácii} je dané, že pri generovaní kódu je potrebné špecifikovať konfiguračný súbor. Konfiguračný súbor som zvolil \textit{mib2c.scalar.conf}, pretože naše objekty sú skalárneho typu.
+    \begin{figure}[!htb]
+	    \begin{lstlisting}[language=bash]
+                    mib2c -c mib2c.scalar.conf MIBNODE
+        \end{lstlisting}
+        \caption{mib2c}
+    \end{figure}
+   \vspace{1cm}
+    \\
+    Vo vygenerovanej kostre bolo potrebné vytvoriť premenné, ktoré budú obsahovať jednotlivé hodnoty, špecifikované zo zadania. Pre každý objekt bola vygenerovaná funkcia handle, ktorá obsluhovala požiadavky(\textit{MODE\_GET}) na objekt. V týchto jednotlivých požiadavkách som na vyznačených pozíciách, doplnil vytvorené premenné. 
+    
+    Pre zobrazenie aktuálneho času som využil funkciu \textit{localtime()}knižnicu \textit{<time.h>}. Čas je formátovaný podľa \href{https://tools.ietf.org/html/rfc3339}{RFC 3339}, v ktorom sa ako ústredné časové pásmo používa UTC, ostatné časové pásma sú špecifikované offsetom.
+    
+    Objekt s prepisovateľným integerom, okrem \textit{MODE\_GET} obsahuje aj \textit{MODE\_SET} požiadavky. Tieto požiadavky umožňujú aj vrátenie predchádzajúcej hodnoty, preto som pre tento objekt vytvoril dve premenné. 
+    Pre objekt obsahujúci informáciu o Operačnom systéme, som využil funkciu \textit{uname} z knižnice \textit{<sys/utsname.h>}. Informáciu ktorú zdielam je názov operačného systému.
+    
+    \vspace{1cm}
+    \section{Spustenie a otestovanie}
+    \subsection{Nastavenie DLMOD tabulky a preklad}
+	Ako prvé je treba otvoriť terminál, v ktorom bude bežať SNMP agent. V zložke s \textit{Makefile} preložte projekt s \textit{make}. Následne spustite snmp agenta, nasledovne:
+	\begin{figure}[!htb]
+	    \begin{lstlisting}[language=bash]
+                    sudo snmpd -f -L -DIsaSNMPMIB,dlmod
+        \end{lstlisting}
+        \caption{Spustenie agenta}
+    \end{figure}
+   \vspace{1cm}
+   \\
+   Otvorte ďalší terminál. V tomto terminály ja najskôr potreba nastaviť DLMOD tabuľku nasledovne: 
+	\begin{figure}[!htb]
+	    \begin{lstlisting}[language=bash]
+//Create a new row in the dlmod table
+snmpset localhost UCD-DLMOD-MIB::dlmodStatus.1 i create
+
+// See that the row was created
+snmptable localhost UCD-DLMOD-MIB::dlmodTable 
+
+//set the properties of the row up to point to our new object and to give it a name
+snmpset localhost UCD-DLMOD-MIB::dlmodName.1 s IsaSNMPMIB UCD-DLMOD-MIB::dlmodPath.1 s /path
+/to/IsaSNMPMIB.so
+ptable localhost UCD-DLMOD-MIB::dlmodTable 
+
+//load the shared object into the running agent
+snmpset localhost UCD-DLMOD-MIB::dlmodStatus.1 i load 
+
+snmptable localhost UCD-DLMOD-MIB::dlmodTable 
+        \end{lstlisting}
+        \caption{Nastavenie DLMOD tabuľky}
+    \end{figure}
+   \vspace{1cm}
+	\subsection{Otestovanie}
+	Otestovanie požiadavok na \textit{snmpget} je možné pomocou príkazu. Obsah všetkých objektov je možné pozriet na skôr spomenutom obrázku \ref{MIBcontent}
+
+	\begin{figure}[!htb]
+	    \begin{lstlisting}[language=bash]
+                snmpget localhost ISA-SNMP-MIB::OBJECT-NAME.0
+        \end{lstlisting}
+        \caption{Požiadavok get na objekt.}
+    \end{figure}
+    
+    Otestovanie požiadavky \textit{snmpset} pomocou nasledujúceho príkazov. Prvý príkaz zobrazí aktuálnu hodnotu objektu, druhý ju aktualizuje na 999 a posledným skontrolujeme, že prebehla zmena.
+	
+	\begin{figure}[!htb]
+	    \begin{lstlisting}[language=bash]
+	        snmpget localhost ISA-SNMP-MIB::IsaINT.0
+	    
+                snmpset localhost ISA-SNMP-MIB::IsaINT.0 i 999
+                
+                snmpget localhost ISA-SNMP-MIB::IsaINT.0
+        \end{lstlisting}
+        \caption{Požiadavok set na objekt.}
+    \end{figure}
+	
+\end{document}
