@@ -62,7 +62,7 @@ snmpget localhost ISA-SNMP-MIB::IsaTIME.0
 
 snmpset localhost ISA-SNMP-MIB::IsaINT.0 i 999
 
-snmpset localhost ISA-SNMP-MIB::IsaINT.0 i 999
+snmpget localhost ISA-SNMP-MIB::IsaINT.0
 
 snmpget localhost ISA-SNMP-MIB::IsaOSINFO.0
 ```
