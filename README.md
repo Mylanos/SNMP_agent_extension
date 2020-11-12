@@ -33,6 +33,22 @@ mib2c -c mib2c.scalar.conf IsaSNMPMIB
 sudo snmpd -f -L -DIsaSNMPMIB,dlmod
 ```
 
+## Nastavenie dlmod tabulky
+```
+snmpset localhost UCD-DLMOD-MIB::dlmodStatus.1 i create
+
+snmptable localhost UCD-DLMOD-MIB::dlmodTable 
+
+snmpset localhost UCD-DLMOD-MIB::dlmodName.1 s IsaSNMPMIB UCD-DLMOD-MIB::dlmodPath.1 s [<path-to-.so-file>]/IsaSNMPMIB.so
+
+snmptable localhost UCD-DLMOD-MIB::dlmodTable 
+
+snmpset localhost UCD-DLMOD-MIB::dlmodStatus.1 i load 
+
+snmptable localhost UCD-DLMOD-MIB::dlmodTable 
+
+```
+
 ## Priklad požiadaviek na vytvorené objekty
 -------------------------
 ```
